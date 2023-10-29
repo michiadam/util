@@ -4,32 +4,28 @@ import java.io.*;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class LocalFileCache<T extends Serializable> {
-
+public abstract class LocalFileCache<T > {
 
     private Optional<T> cachedValue = Optional.empty();
 
-    private final String path;
+    protected final String path;
 
-    private final Class<T> type;
+    protected final Class<T> type;
 
     public LocalFileCache(String path, Class<T> type) {
         this.path = path;
         this.type = type;
 
         try {
-            this.cachedValue = Optional.ofNullable(type.cast(readObjectFromFile()));
+            this.cachedValue = Optional.ofNullable(T(readObjectFromFile()));
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    private Object readObjectFromFile() throws IOException, ClassNotFoundException {
-        try (FileInputStream fileInputStream = new FileInputStream(path);
-             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
-             return type.cast(objectInputStream.readObject());
-        }
-    }
+    public abstract T readObjectFromFile();
+    public abstract void writeObjectToFile(T obj, String path);
+
 
     public Optional<T> getCachedValue() {
         return cachedValue;
@@ -48,9 +44,9 @@ public class LocalFileCache<T extends Serializable> {
     }
 
     public void flush() throws IOException {
-        if(cachedValue.isPresent()){
-            writeObjectToFile(cachedValue.get(), path);
-        }
+        cachedValue.ifPresent(t -> writeObjectToFile(t, path));
+        //reread
+        cachedValue = Optional.ofNullable(readObjectFromFile());
     }
 
 
@@ -60,13 +56,6 @@ public class LocalFileCache<T extends Serializable> {
         writeObjectToFile(value, path);
     }
 
-
-    private void writeObjectToFile(T value, String path) throws IOException {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(path);
-             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
-            objectOutputStream.writeObject(value);
-        }
-    }
 
 
 }
