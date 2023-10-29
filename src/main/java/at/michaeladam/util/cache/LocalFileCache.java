@@ -16,11 +16,7 @@ public abstract class LocalFileCache<T > {
         this.path = path;
         this.type = type;
 
-        try {
-            this.cachedValue = Optional.ofNullable(T(readObjectFromFile()));
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        this.cachedValue = Optional.ofNullable((readObjectFromFile()));
     }
 
     public abstract T readObjectFromFile();
