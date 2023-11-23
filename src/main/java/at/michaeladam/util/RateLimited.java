@@ -54,14 +54,13 @@ public class RateLimited<T, R> {
         return awaitExecute(null);
     }
 
-    public R awaitExecute(T t) throws InterruptedException {
+    public synchronized R awaitExecute(T t) throws InterruptedException {
         if (!isReady()) {
-                Thread.sleep(cooldown - (System.currentTimeMillis() - lastExecution));
-
-            lastExecution = System.currentTimeMillis();
-            return function.apply(t);
+           Thread.sleep(cooldown - (System.currentTimeMillis() - lastExecution));
         }
-        return function.apply(t);
+        R applied = function.apply(t);
+        lastExecution = System.currentTimeMillis();
+        return applied;
     }
 
 
